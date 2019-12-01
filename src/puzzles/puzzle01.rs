@@ -1,6 +1,6 @@
 use failure::_core::str::FromStr;
 
-pub fn run(input : String) -> Vec<String>{
+pub fn run(input: String) -> Vec<String> {
     let mut answers: Vec<String> = Vec::new();
 
     // Split the input by lines, then map them all to numbers

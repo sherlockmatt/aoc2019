@@ -3,8 +3,8 @@ use failure::Error;
 
 mod puzzle01;
 
-pub fn run(puzzle_number : usize, input : String) -> Result<Vec<String>, Error> {
-    let puzzle_functions : [&dyn Fn(String) -> Vec<String>; 1] = [
+pub fn run(puzzle_number: usize, input: String) -> Result<Vec<String>, Error> {
+    let puzzle_functions: [&dyn Fn(String) -> Vec<String>; 1] = [
         &puzzle01::run,
     ];
 
