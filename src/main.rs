@@ -1,5 +1,6 @@
 #[macro_use]
 extern crate failure;
+extern crate exitfailure;
 
 use structopt::StructOpt;
 use failure::ResultExt;
@@ -14,9 +15,9 @@ struct Cli {
     /// Path to the file containing your session cookie
     #[structopt(short, long, default_value = "session.txt")]
     session: std::path::PathBuf,
-    /// Puzzle number to run, if 0 run all puzzles
-    #[structopt(short, long = "number", default_value = "0")]
-    num: usize,
+    /// Puzzle numbers to run, using range syntax e.g. 1-3,7,8-21,25
+    #[structopt(short, long = "number", default_value = "1-25")]
+    num: String,
 }
 
 fn main() -> Result<(), ExitFailure> {
@@ -24,9 +25,7 @@ fn main() -> Result<(), ExitFailure> {
     let session = std::fs::read_to_string(&args.session)
         .with_context(|_| format!("Could not read session file `{}`", &args.session.display()))?;
 
-    let puzzles_to_run = if args.num == 0 { 1usize..=25usize } else { args.num..=args.num };
-
-    for i in puzzles_to_run {
+    for i in utils::parse_range(args.num)? {
         println!("Starting puzzle number {}", i);
 
         let puzzle_input = utils::download(i, &session).unwrap_or_else(|e| {
