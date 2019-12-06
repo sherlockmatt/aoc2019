@@ -9,6 +9,7 @@ use std::time::Instant;
 
 mod utils;
 mod puzzles;
+mod intcode;
 
 #[derive(StructOpt)]
 struct Cli {
