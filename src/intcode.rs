@@ -2,6 +2,7 @@ use std::collections::HashMap;
 use failure::_core::convert::{TryInto, TryFrom};
 
 pub struct Operation {
+    name: String,
     length: usize,
     arg_mode_overrides: Vec<Option<i32>>,
     function: fn(&mut Vec<i32>, Vec<i32>, &mut Vec<i32>, &mut Vec<i32>) -> (bool, Option<usize>),
@@ -11,15 +12,18 @@ pub struct IntcodeMachine<'a> {
     memory: &'a mut Vec<i32>,
     opcodes: HashMap<i32, Operation>,
     inputs: &'a mut Vec<i32>,
-    outputs: &'a mut Vec<i32>
+    outputs: &'a mut Vec<i32>,
+    pos: usize,
+    is_halted: bool
 }
 
 impl IntcodeMachine<'_> {
-    pub fn new<'a>(memory: &'a mut Vec<i32>, inputs: &'a mut Vec<i32>, outputs: &'a mut Vec<i32>) -> IntcodeMachine<'a> {
+    pub fn new<'a>(memory: &'a mut Vec<i32>, inputs: &'a mut Vec<i32>, outputs: &'a mut Vec<i32>, pos: usize) -> IntcodeMachine<'a> {
         let mut opcodes: HashMap<i32, Operation> = HashMap::new();
         opcodes.insert(
             1,
-            Operation { // ADD
+            Operation {
+                name: String::from("ADD"),
                 length: 4,
                 arg_mode_overrides: vec![None, None, Some(1)],
                 function: |state, args, _, _| {
@@ -29,7 +33,8 @@ impl IntcodeMachine<'_> {
             });
         opcodes.insert(
             2,
-            Operation { // SUBTRACT
+            Operation {
+                name: String::from("SUBTRACT"),
                 length: 4,
                 arg_mode_overrides: vec![None, None, Some(1)],
                 function: |state, args, _, _| {
@@ -39,7 +44,8 @@ impl IntcodeMachine<'_> {
             });
         opcodes.insert(
             3,
-            Operation { // INPUT
+            Operation {
+                name: String::from("INPUT"),
                 length: 2,
                 arg_mode_overrides: vec![Some(1)],
                 function: |state, args, inputs, _| {
@@ -50,7 +56,8 @@ impl IntcodeMachine<'_> {
         );
         opcodes.insert(
             4,
-            Operation { // OUTPUT
+            Operation {
+                name: String::from("OUTPUT"),
                 length: 2,
                 arg_mode_overrides: vec![Some(1)],
                 function: |state, args, _, outputs| {
@@ -61,7 +68,8 @@ impl IntcodeMachine<'_> {
         );
         opcodes.insert(
             5,
-            Operation { // JUMP IF TRUE
+            Operation {
+                name: String::from("JUMP IF TRUE"),
                 length: 3,
                 arg_mode_overrides: vec![None, None],
                 function: |_, args, _, _| {
@@ -74,7 +82,8 @@ impl IntcodeMachine<'_> {
         );
         opcodes.insert(
             6,
-            Operation { // JUMP IF FALSE
+            Operation {
+                name: String::from("JUMP IF FALSE"),
                 length: 3,
                 arg_mode_overrides: vec![None, None],
                 function: |_, args, _, _| {
@@ -87,7 +96,8 @@ impl IntcodeMachine<'_> {
         );
         opcodes.insert(
             7,
-            Operation { // LESS THAN
+            Operation {
+                name: String::from("LESS THAN"),
                 length: 4,
                 arg_mode_overrides: vec![None, None, Some(1)],
                 function: |state, args, _, _| {
@@ -98,7 +108,8 @@ impl IntcodeMachine<'_> {
         );
         opcodes.insert(
             8,
-            Operation { // EQUAL TO
+            Operation {
+                name: String::from("EQUAL TO"),
                 length: 4,
                 arg_mode_overrides: vec![None, None, Some(1)],
                 function: |state, args, _, _| {
@@ -109,7 +120,8 @@ impl IntcodeMachine<'_> {
         );
         opcodes.insert(
             99,
-            Operation { // HALT
+            Operation {
+                name: String::from("HALT"),
                 length: 1,
                 arg_mode_overrides: vec![],
                 function: |_, _, _, _| (true, None),
@@ -119,20 +131,21 @@ impl IntcodeMachine<'_> {
             memory,
             opcodes,
             inputs,
-            outputs
+            outputs,
+            pos,
+            is_halted: false
         }
     }
 
-    pub fn execute(&mut self) {
-        let mut pos: usize = 0;
+    pub fn execute(&mut self, until_fn: fn(&IntcodeMachine) -> bool) {
         let mut running: bool = true;
 
         while running {
             // Opcode is the last two digits of the value, the rest are the argument modes
-            let opcode: i32 = self.memory[pos] % 100;
-            let mut arg_modes: i32 = self.memory[pos] / 100;
+            let opcode: i32 = self.memory[self.pos] % 100;
+            let mut arg_modes: i32 = self.memory[self.pos] / 100;
 
-            let operation: &Operation = self.opcodes.get(&opcode).unwrap_or_else(|| panic!("Unknown opcode found `{}`", opcode));
+            let operation: &Operation = self.opcodes.get(&opcode).unwrap_or_else(|| panic!("Unknown opcode found `{}` at pos `{}` of memory `{:?}`", opcode, self.pos, self.memory));
             let mut args: Vec<i32> = vec![];
 
             for n in 1..operation.length {
@@ -141,9 +154,9 @@ impl IntcodeMachine<'_> {
                 let pos_to_get: usize;
 
                 if arg_mode == 1 {
-                    pos_to_get = pos + n;
+                    pos_to_get = self.pos + n;
                 } else {
-                    pos_to_get = self.memory[pos + n].try_into().unwrap();
+                    pos_to_get = self.memory[self.pos + n].try_into().unwrap();
                 }
 
                 args.push(self.memory[pos_to_get]);
@@ -153,16 +166,35 @@ impl IntcodeMachine<'_> {
             }
 
             let (halt, jump) = (operation.function)(self.memory, args, self.inputs, self.outputs);
-            running = !halt;
+            self.is_halted = halt;
 
-            pos = match jump {
-                None => pos + operation.length,
+            self.pos = match jump {
+                None => self.pos + operation.length,
                 Some(location) => location
             };
+
+            running = !self.is_halted && !(until_fn)(self);
         }
     }
 
-    pub fn solve<'a>(memory: &'a mut Vec<i32>, inputs: &'a mut Vec<i32>, outputs: &'a mut Vec<i32>) {
-        IntcodeMachine::new(memory, inputs, outputs).execute();
+    pub fn is_halted(&self) -> bool {
+        self.is_halted
+    }
+
+    pub fn get_pos(&self) -> usize {
+        self.pos
+    }
+
+    pub fn execute_until_halt(&mut self) {
+        self.execute(|_| false);
+    }
+
+    pub fn execute_until_next_op_is_input(&mut self) {
+        self.execute(|m|
+            match m.opcodes.get(&(m.memory[m.pos] % 100)) {
+                Some(o) if o.name == String::from("INPUT") => true,
+                _ => false
+            }
+        );
     }
 }
