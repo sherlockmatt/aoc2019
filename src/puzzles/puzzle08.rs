@@ -9,8 +9,8 @@ pub fn run(input: String) -> Vec<String> {
 
     let input_as_chars = input.trim().chars().collect::<Vec<char>>();
 
-    // For each chunk of 25*6 (i.e. a layer), build a frequency hash map
-    // Then take the one with the least 0s, multiply it's 1 and 2 counts together
+    // For each chunk of width*height (i.e. a layer), build a frequency hash map
+    // Then take the one with the least 0s, multiply its 1 and 2 counts together
     answers.push(format!("{}", input_as_chars.chunks_exact(image_width * image_height)
         .map(|layer| {
             let mut hs = HashMap::new();
@@ -22,8 +22,8 @@ pub fn run(input: String) -> Vec<String> {
         .fold(1, |a, (&&c, f)| if c == '1' || c == '2' { a * *f } else { a })
     ));
 
-    // For each pixel position get an iterator of each layer's pixel at that position (using .skip(i).step_by(25*6))
-    // Then fold that iterator such that we propagate the first non-2 we found, replaced by a black or white pixel
+    // For each pixel position get an iterator of each layer's pixel at that position (using .skip(i).step_by(width*height))
+    // Then fold that iterator such that we propagate the first non-2 we find, replaced by a black or white pixel
     answers.push(format!("\n{}", (0..(image_width * image_height)).map(
         |i|
             input_as_chars.iter().skip(i).step_by(image_width * image_height).fold(
