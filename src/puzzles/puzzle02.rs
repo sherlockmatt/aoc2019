@@ -29,7 +29,7 @@ fn calc(state: &mut Vec<i64>, noun: i64, verb: i64) -> i64 {
     state[1] = noun;
     state[2] = verb;
 
-    IntcodeMachine::new(state, &mut vec![], &mut vec![], 0).execute_until_halt();
+    IntcodeMachine::new(state, &mut vec![], &mut vec![], 0, 0).execute_until_halt();
 
     state[0]
 }

@@ -18,7 +18,7 @@ pub struct IntcodeMachine<'a> {
 }
 
 impl IntcodeMachine<'_> {
-    pub fn new<'a>(memory: &'a mut Vec<i64>, inputs: &'a mut Vec<i64>, outputs: &'a mut Vec<i64>, pos: usize) -> IntcodeMachine<'a> {
+    pub fn new<'a>(memory: &'a mut Vec<i64>, inputs: &'a mut Vec<i64>, outputs: &'a mut Vec<i64>, pos: usize, base: i64) -> IntcodeMachine<'a> {
         let mut opcodes: HashMap<i64, Operation> = HashMap::new();
         opcodes.insert(
             1,
@@ -137,7 +137,7 @@ impl IntcodeMachine<'_> {
             outputs,
             pos,
             is_halted: false,
-            base: 0,
+            base,
         }
     }
 
@@ -163,7 +163,7 @@ impl IntcodeMachine<'_> {
                 }
                 );
 
-                if args[n - 1] > self.memory.len().try_into().unwrap() {
+                if args[n - 1] >= self.memory.len().try_into().unwrap() {
                     self.memory.resize(usize::try_from(args[n - 1]).unwrap() + 100, 0)
                 }
 
@@ -189,6 +189,10 @@ impl IntcodeMachine<'_> {
 
     pub fn get_pos(&self) -> usize {
         self.pos
+    }
+
+    pub fn get_base(&self) -> i64 {
+        self.base
     }
 
     pub fn execute_until_halt(&mut self) {

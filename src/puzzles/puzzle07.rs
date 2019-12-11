@@ -16,7 +16,7 @@ pub fn run(input: String) -> Vec<String> {
                 let inputs: &mut Vec<i64> = &mut outputs.clone();
                 inputs.push(i);
                 outputs.clear();
-                IntcodeMachine::new(&mut program.clone(), inputs, outputs, 0).execute_until_halt();
+                IntcodeMachine::new(&mut program.clone(), inputs, outputs, 0, 0).execute_until_halt();
             }
 
             outputs[0]
@@ -31,17 +31,19 @@ pub fn run(input: String) -> Vec<String> {
             let outputs: [&mut Vec<i64>; 5] = [&mut vec![], &mut vec![], &mut vec![], &mut vec![], &mut vec![]];
             let states: [&mut Vec<i64>; 5] = [&mut program.clone(), &mut program.clone(), &mut program.clone(), &mut program.clone(), &mut program.clone()];
             let mut positions: [usize; 5] = [0, 0, 0, 0, 0];
+            let mut bases: [i64; 5] = [0, 0, 0, 0, 0];
 
             // Run all the machines once to consume their initial state
             for current in 0usize..=4usize {
-                let mut machine = IntcodeMachine::new(states[current], inputs[current], outputs[current], positions[current]);
+                let mut machine = IntcodeMachine::new(states[current], inputs[current], outputs[current], positions[current], bases[current]);
                 machine.execute_until_next_op_is_input();
                 positions[current] = machine.get_pos();
+                bases[current] = machine.get_base();
             }
 
             let mut current: usize = 0;
             loop {
-                let mut machine = IntcodeMachine::new(states[current], inputs[current], outputs[current], positions[current]);
+                let mut machine = IntcodeMachine::new(states[current], inputs[current], outputs[current], positions[current], bases[current]);
                 machine.execute_until_next_op_is_input();
 
                 // Save the position so that next loop we can start from where we left off
