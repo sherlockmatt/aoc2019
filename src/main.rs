@@ -29,7 +29,7 @@ fn main() -> Result<(), ExitFailure> {
     for i in utils::parse_range(args.num)? {
         println!("Starting puzzle number {}", i);
 
-        let puzzle_input = utils::download(i, &session).unwrap_or_else(|e| {
+        let puzzle_input = utils::download(i, session.trim()).unwrap_or_else(|e| {
             println!("ERROR: {}", e);
             return String::from("");
         });

@@ -1,10 +1,10 @@
 use failure::{Error, ResultExt};
 use failure::_core::str::FromStr;
 use failure::_core::fmt;
-use failure::_core::cmp::Reverse;
+use failure::_core::cmp::{Reverse, Ordering};
 use std::collections::{HashMap, HashSet, BinaryHeap};
 
-pub fn download(puzzle_number: usize, session: &String) -> Result<String, Error> {
+pub fn download(puzzle_number: usize, session: &str) -> Result<String, Error> {
     let url_to_get = format!("https://adventofcode.com/2019/day/{}/input", puzzle_number);
     let client = reqwest::Client::new();
     return Ok(client.get(&url_to_get)
@@ -31,7 +31,7 @@ pub fn parse_range(input: String) -> Result<Vec<usize>, Error> {
     Ok(ret)
 }
 
-#[derive(PartialEq, Eq, Clone, Copy, Hash, PartialOrd, Ord)]
+#[derive(PartialEq, Eq, Clone, Copy, Hash, PartialOrd)]
 pub struct Pos {
     pub x: usize,
     pub y: usize
@@ -50,6 +50,12 @@ impl Pos {
 impl fmt::Debug for Pos {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "({:?}, {:?})", self.x, self.y)
+    }
+}
+
+impl Ord for Pos {
+    fn cmp(&self, other: &Self) -> Ordering {
+        self.distance_to(&Pos::new(0, 0)).cmp(&other.distance_to(&Pos::new(0, 0)))
     }
 }
 
