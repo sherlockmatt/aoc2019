@@ -21,9 +21,10 @@ mod puzzle17;
 mod puzzle18;
 mod puzzle19;
 mod puzzle20;
+mod puzzle21;
 
 pub fn run(puzzle_number: usize, input: String) -> Result<Vec<String>, Error> {
-    let puzzle_functions: [&dyn Fn(String) -> Vec<String>; 20] = [
+    let puzzle_functions: [&dyn Fn(String) -> Vec<String>; 21] = [
         &puzzle01::run,
         &puzzle02::run,
         &puzzle03::run,
@@ -44,6 +45,7 @@ pub fn run(puzzle_number: usize, input: String) -> Result<Vec<String>, Error> {
         &puzzle18::run,
         &puzzle19::run,
         &puzzle20::run,
+        &puzzle21::run,
     ];
 
     ensure!(puzzle_number <= puzzle_functions.len(), "Puzzle number {} not found", puzzle_number);
