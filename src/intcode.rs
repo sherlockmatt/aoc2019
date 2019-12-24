@@ -33,7 +33,7 @@ impl IntcodeMachine<'_> {
         opcodes.insert(
             2,
             Operation {
-                name: String::from("SUBTRACT"),
+                name: String::from("MULTIPLY"),
                 length: 4,
                 function: |state, args, _, _, _| {
                     state[usize::try_from(args[2]).unwrap()] = state[args[0]] * state[args[1]];
