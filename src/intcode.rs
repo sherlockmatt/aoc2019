@@ -207,4 +207,10 @@ impl IntcodeMachine<'_> {
             }
         );
     }
+
+    pub fn execute_until_input_is_consumed(&mut self) {
+        self.execute(|m|
+            m.inputs.len() == 0
+        );
+    }
 }
